@@ -34,9 +34,8 @@ func main() {
 		Addr: "localhost:6379",
 	})
 
-	cache, _ := cache.NewGorm2Cache(&config.NewRedisConfig(redisClient))
 	// More options in `config.config.go`
-	db.Use(cache) // use gorm plugin
+	db.Use(cache.NewPlugin(cache.WithRedisConfig(redisClient))) // use gorm plugin
 	// cache.AttachToDB(db)
 
 	var users []User
