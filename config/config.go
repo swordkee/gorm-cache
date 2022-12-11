@@ -5,8 +5,8 @@ import (
 	"github.com/swordkee/gorm-cache/cache"
 )
 
-func NewMemoryConfig() CacheConfig {
-	return CacheConfig{
+func NewMemoryConfig() *CacheConfig {
+	return &CacheConfig{
 		CacheLevel:           CacheLevelAll,
 		CacheStorage:         CacheStorageMemory,
 		InvalidateWhenUpdate: true,
@@ -14,8 +14,8 @@ func NewMemoryConfig() CacheConfig {
 		CacheMaxItemCnt:      5,
 	}
 }
-func NewRedisConfig(redisClient *redis.Client) CacheConfig {
-	return CacheConfig{
+func NewRedisConfig(redisClient *redis.Client) *CacheConfig {
+	return &CacheConfig{
 		CacheLevel:           CacheLevelAll,
 		CacheStorage:         CacheStorageRedis,
 		RedisConfig:          cache.NewRedisConfigWithClient(redisClient),
