@@ -27,7 +27,7 @@ func GenPrimaryCachePrefix(instanceId string, tableName string) string {
 	return GormCachePrefix + ":" + instanceId + ":p:" + tableName
 }
 
-func GenSearchCacheKey(instanceId string, tableName string, sql string, vars ...interface{}) string {
+func GenSearchCacheKey(instanceId string, tableName string, sql string, vars ...any) string {
 	buf := strings.Builder{}
 	buf.WriteString(sql)
 	for _, v := range vars {

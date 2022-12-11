@@ -23,7 +23,7 @@ func AfterQuery(cache *Gorm2Cache) func(db *gorm.DB) {
 		sqlObj, _ := db.InstanceGet("gorm:cache:sql")
 		sql := sqlObj.(string)
 		varObj, _ := db.InstanceGet("gorm:cache:vars")
-		vars := varObj.([]interface{})
+		vars := varObj.([]any)
 
 		if db.Error == nil {
 			// error is nil -> cache not hit, we cache newly retrieved data
@@ -35,7 +35,7 @@ func AfterQuery(cache *Gorm2Cache) func(db *gorm.DB) {
 			go func() {
 				defer wg.Done()
 
-				if cache.Config.CacheLevel == config.CacheLevelAll || cache.Config.CacheLevel == config.CacheLevelOnlySearch {
+				if util.In(cache.Config.CacheLevel, []config.CacheLevel{config.CacheLevelAll, config.CacheLevelOnlySearch}) {
 					// cache search data
 					if int64(len(objects)) > cache.Config.CacheMaxItemCnt {
 						return
@@ -60,7 +60,7 @@ func AfterQuery(cache *Gorm2Cache) func(db *gorm.DB) {
 			go func() {
 				defer wg.Done()
 
-				if cache.Config.CacheLevel == config.CacheLevelAll || cache.Config.CacheLevel == config.CacheLevelOnlyPrimary {
+				if util.In(cache.Config.CacheLevel, []config.CacheLevel{config.CacheLevelAll, config.CacheLevelOnlyPrimary}) {
 					// cache primary cache data
 					if len(primaryKeys) != len(objects) {
 						return

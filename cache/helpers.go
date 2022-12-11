@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
+	"github.com/swordkee/gorm-cache/util"
 	"reflect"
 	"strconv"
 	"strings"
@@ -38,29 +39,26 @@ func getPrimaryKeysFromWhereClause(db *gorm.DB) []string {
 		return nil
 	}
 	for _, expr := range where.Exprs {
-		eqExpr, ok := expr.(clause.Eq)
-		if ok {
+		if eqExpr, ok := expr.(clause.Eq); ok {
 			if getColNameFromColumn(eqExpr.Column) == dbName {
 				primaryKeys = append(primaryKeys, fmt.Sprintf("%v", eqExpr.Value))
 			}
 			continue
 		}
-		inExpr, ok := expr.(clause.IN)
-		if ok {
+		if inExpr, ok := expr.(clause.IN); ok {
 			if getColNameFromColumn(inExpr.Column) == dbName {
 				for _, val := range inExpr.Values {
 					primaryKeys = append(primaryKeys, fmt.Sprintf("%v", val))
 				}
 			}
 		}
-		exprStruct, ok := expr.(clause.Expr)
-		if ok {
-			ttype := getExprType(exprStruct)
-			//fmt.Printf("expr: %+v, ttype: %s\n", exprStruct, ttype)
-			if ttype == "in" || ttype == "eq" {
-				fieldName := getColNameFromExpr(exprStruct, ttype)
+		if exprStruct, ok := expr.(clause.Expr); ok {
+			tType := getExprType(exprStruct)
+			//fmt.Printf("expr: %+v, tType: %s\n", exprStruct, tType)
+			if util.In(tType, []string{"in", "eq"}) {
+				fieldName := getColNameFromExpr(exprStruct, tType)
 				if fieldName == dbName {
-					pKeys := getPrimaryKeysFromExpr(exprStruct, ttype)
+					pKeys := getPrimaryKeysFromExpr(exprStruct, tType)
 					primaryKeys = append(primaryKeys, pKeys...)
 				}
 			}
@@ -69,7 +67,7 @@ func getPrimaryKeysFromWhereClause(db *gorm.DB) []string {
 	return uniqueStringSlice(primaryKeys)
 }
 
-func getColNameFromColumn(col interface{}) string {
+func getColNameFromColumn(col any) string {
 	switch v := col.(type) {
 	case string:
 		return v
@@ -96,25 +94,22 @@ func hasOtherClauseExceptPrimaryField(db *gorm.DB) bool {
 		return true // return true to skip cache
 	}
 	for _, expr := range where.Exprs {
-		eqExpr, ok := expr.(clause.Eq)
-		if ok {
+		if eqExpr, ok := expr.(clause.Eq); ok {
 			if getColNameFromColumn(eqExpr.Column) != dbName {
 				return true
 			}
 			continue
 		}
-		inExpr, ok := expr.(clause.IN)
-		if ok {
+		if inExpr, ok := expr.(clause.IN); ok {
 			if getColNameFromColumn(inExpr.Column) != dbName {
 				return true
 			}
 			continue
 		}
-		exprStruct, ok := expr.(clause.Expr)
-		if ok {
-			ttype := getExprType(exprStruct)
-			if ttype == "in" || ttype == "eq" {
-				fieldName := getColNameFromExpr(exprStruct, ttype)
+		if exprStruct, ok := expr.(clause.Expr); ok {
+			tType := getExprType(exprStruct)
+			if util.In(tType, []string{"in", "eq"}) {
+				fieldName := getColNameFromExpr(exprStruct, tType)
 				if fieldName != dbName {
 					return true
 				}
@@ -214,7 +209,7 @@ func getPrimaryKeysFromExpr(expr clause.Expr, ttype string) []string {
 	return primaryKeys
 }
 
-func getObjectsAfterLoad(db *gorm.DB) (primaryKeys []string, objects []interface{}) {
+func getObjectsAfterLoad(db *gorm.DB) (primaryKeys []string, objects []any) {
 	primaryKeys = make([]string, 0)
 	values := make([]reflect.Value, 0)
 
@@ -229,7 +224,7 @@ func getObjectsAfterLoad(db *gorm.DB) (primaryKeys []string, objects []interface
 		values = append(values, destValue)
 	}
 
-	var valueOf func(context.Context, reflect.Value) (value interface{}, zero bool) = nil
+	var valueOf func(context.Context, reflect.Value) (value any, zero bool) = nil
 	if db.Statement.Schema != nil {
 		for _, field := range db.Statement.Schema.Fields {
 			if field.PrimaryKey {
@@ -239,7 +234,7 @@ func getObjectsAfterLoad(db *gorm.DB) (primaryKeys []string, objects []interface
 		}
 	}
 
-	objects = make([]interface{}, 0, len(values))
+	objects = make([]any, 0, len(values))
 	for _, elemValue := range values {
 		if valueOf != nil {
 			primaryKey, isZero := valueOf(context.Background(), elemValue)
@@ -266,7 +261,7 @@ func uniqueStringSlice(slice []string) []string {
 	return retSlice
 }
 
-func extractStringsFromVar(v interface{}) []string {
+func extractStringsFromVar(v any) []string {
 	noPtrValue := reflect.Indirect(reflect.ValueOf(v))
 	switch noPtrValue.Kind() {
 	case reflect.Slice, reflect.Array:

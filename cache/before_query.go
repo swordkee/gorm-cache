@@ -31,7 +31,7 @@ func BeforeQuery(cache *Gorm2Cache) func(db *gorm.DB) {
 
 		if util.ShouldCache(tableName, cache.Config.Tables) {
 
-			if cache.Config.CacheLevel == config.CacheLevelAll || cache.Config.CacheLevel == config.CacheLevelOnlySearch {
+			if util.In(cache.Config.CacheLevel, []config.CacheLevel{config.CacheLevelAll, config.CacheLevelOnlySearch}) {
 				// search cache hit
 
 				cacheValue, err := cache.GetSearchCache(ctx, tableName, sql, db.Statement.Vars...)
@@ -61,7 +61,7 @@ func BeforeQuery(cache *Gorm2Cache) func(db *gorm.DB) {
 				return
 			}
 
-			if cache.Config.CacheLevel == config.CacheLevelAll || cache.Config.CacheLevel == config.CacheLevelOnlyPrimary {
+			if util.In(cache.Config.CacheLevel, []config.CacheLevel{config.CacheLevelAll, config.CacheLevelOnlyPrimary}) {
 				primaryKeys := getPrimaryKeysFromWhereClause(db)
 				cache.Logger.CtxInfo(ctx, "[BeforeQuery] parse primary keys = %v", primaryKeys)
 

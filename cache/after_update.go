@@ -25,7 +25,7 @@ func AfterUpdate(cache *Gorm2Cache) func(db *gorm.DB) {
 			go func() {
 				defer wg.Done()
 
-				if cache.Config.CacheLevel == config.CacheLevelAll || cache.Config.CacheLevel == config.CacheLevelOnlyPrimary {
+				if util.In(cache.Config.CacheLevel, []config.CacheLevel{config.CacheLevelAll, config.CacheLevelOnlyPrimary}) {
 					primaryKeys := getPrimaryKeysFromWhereClause(db)
 					cache.Logger.CtxInfo(ctx, "[AfterUpdate] parse primary keys = %v", primaryKeys)
 
@@ -55,7 +55,7 @@ func AfterUpdate(cache *Gorm2Cache) func(db *gorm.DB) {
 			go func() {
 				defer wg.Done()
 
-				if cache.Config.CacheLevel == config.CacheLevelAll || cache.Config.CacheLevel == config.CacheLevelOnlySearch {
+				if util.In(cache.Config.CacheLevel, []config.CacheLevel{config.CacheLevelAll, config.CacheLevelOnlySearch}) {
 					cache.Logger.CtxInfo(ctx, "[AfterUpdate] now start to invalidate search cache for table: %s", tableName)
 					err := cache.InvalidateSearchCache(ctx, tableName)
 					if err != nil {

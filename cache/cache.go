@@ -143,7 +143,7 @@ func (c *Gorm2Cache) BatchPrimaryKeyExists(ctx context.Context, tableName string
 	return c.cache.BatchKeyExist(ctx, cacheKeys)
 }
 
-func (c *Gorm2Cache) SearchKeyExists(ctx context.Context, tableName string, SQL string, vars ...interface{}) (bool, error) {
+func (c *Gorm2Cache) SearchKeyExists(ctx context.Context, tableName string, SQL string, vars ...any) (bool, error) {
 	cacheKey := util.GenSearchCacheKey(c.InstanceId, tableName, SQL, vars...)
 	return c.cache.KeyExists(ctx, cacheKey)
 }
@@ -156,7 +156,7 @@ func (c *Gorm2Cache) BatchSetPrimaryKeyCache(ctx context.Context, tableName stri
 }
 
 func (c *Gorm2Cache) SetSearchCache(ctx context.Context, cacheValue string, tableName string,
-	sql string, vars ...interface{}) error {
+	sql string, vars ...any) error {
 	key := util.GenSearchCacheKey(c.InstanceId, tableName, sql, vars...)
 	return c.cache.SetKey(ctx, util.Kv{
 		Key:   key,
@@ -164,7 +164,7 @@ func (c *Gorm2Cache) SetSearchCache(ctx context.Context, cacheValue string, tabl
 	})
 }
 
-func (c *Gorm2Cache) GetSearchCache(ctx context.Context, tableName string, sql string, vars ...interface{}) (string, error) {
+func (c *Gorm2Cache) GetSearchCache(ctx context.Context, tableName string, sql string, vars ...any) (string, error) {
 	key := util.GenSearchCacheKey(c.InstanceId, tableName, sql, vars...)
 	return c.cache.GetValue(ctx, key)
 }

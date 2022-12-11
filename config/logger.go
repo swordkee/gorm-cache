@@ -8,8 +8,8 @@ import (
 
 type LoggerInterface interface {
 	SetIsDebug(debug bool)
-	CtxInfo(ctx context.Context, format string, v ...interface{})
-	CtxError(ctx context.Context, format string, v ...interface{})
+	CtxInfo(ctx context.Context, format string, v ...any)
+	CtxError(ctx context.Context, format string, v ...any)
 }
 
 type DefaultLoggerImpl struct {
@@ -20,14 +20,14 @@ func (l *DefaultLoggerImpl) SetIsDebug(d bool) {
 	l.isDebug = d
 }
 
-func (l *DefaultLoggerImpl) CtxInfo(ctx context.Context, format string, v ...interface{}) {
+func (l *DefaultLoggerImpl) CtxInfo(ctx context.Context, format string, v ...any) {
 	if l.isDebug {
 		timePrefix := time.Now().Format("2006-01-02 15:04:05.999")
 		fmt.Printf(timePrefix+" [INFO] "+format+"\n", v...)
 	}
 }
 
-func (l *DefaultLoggerImpl) CtxError(ctx context.Context, format string, v ...interface{}) {
+func (l *DefaultLoggerImpl) CtxError(ctx context.Context, format string, v ...any) {
 	if l.isDebug {
 		timePrefix := time.Now().Format("2006-01-02 15:04:05.999")
 		fmt.Printf(timePrefix+" [ERROR] "+format+"\n", v...)

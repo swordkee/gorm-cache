@@ -24,8 +24,7 @@ func AfterDelete(cache *Gorm2Cache) func(db *gorm.DB) {
 
 			go func() {
 				defer wg.Done()
-
-				if cache.Config.CacheLevel == config.CacheLevelAll || cache.Config.CacheLevel == config.CacheLevelOnlyPrimary {
+				if util.In(cache.Config.CacheLevel, []config.CacheLevel{config.CacheLevelAll, config.CacheLevelOnlyPrimary}) {
 					primaryKeys := getPrimaryKeysFromWhereClause(db)
 					if len(primaryKeys) > 0 {
 						cache.Logger.CtxInfo(ctx, "[AfterDelete] now start to invalidate cache for primary keys: %v",
@@ -54,7 +53,7 @@ func AfterDelete(cache *Gorm2Cache) func(db *gorm.DB) {
 			go func() {
 				defer wg.Done()
 
-				if cache.Config.CacheLevel == config.CacheLevelAll || cache.Config.CacheLevel == config.CacheLevelOnlySearch {
+				if util.In(cache.Config.CacheLevel, []config.CacheLevel{config.CacheLevelAll, config.CacheLevelOnlySearch}) {
 					cache.Logger.CtxInfo(ctx, "[AfterDelete] now start to invalidate search cache for table: %s", tableName)
 					err := cache.InvalidateSearchCache(ctx, tableName)
 					if err != nil {

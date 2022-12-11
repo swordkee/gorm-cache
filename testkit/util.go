@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func log(format string, a ...interface{}) {
+func log(format string, a ...any) {
 	timeStr := time.Now().Format("2006-01-02 15:04:05.999")
 	fmt.Printf(timeStr+" "+format+"\n", a...)
 }
