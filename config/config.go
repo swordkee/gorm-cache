@@ -1,32 +1,7 @@
 package config
 
-import (
-	"github.com/go-redis/redis/v8"
-	"github.com/swordkee/gorm-cache/cache"
-)
-
-func NewMemoryConfig() *CacheConfig {
-	return &CacheConfig{
-		CacheLevel:           CacheLevelAll,
-		CacheStorage:         CacheStorageMemory,
-		InvalidateWhenUpdate: true,
-		CacheTTL:             5000,
-		CacheMaxItemCnt:      5,
-	}
-}
-func NewRedisConfig(redisClient *redis.Client) *CacheConfig {
-	return &CacheConfig{
-		CacheLevel:           CacheLevelAll,
-		CacheStorage:         CacheStorageRedis,
-		RedisConfig:          cache.NewRedisConfigWithClient(redisClient),
-		InvalidateWhenUpdate: true,
-		CacheTTL:             5000,
-		CacheMaxItemCnt:      5,
-	}
-}
-
 type CacheConfig struct {
-	// CacheLevel there're 2 types of cache and 4 kinds of cache option
+	// CacheLevel there are 2 types of cache and 4 kinds of cache option
 	CacheLevel CacheLevel
 
 	// CacheStorage choose proper storage medium
