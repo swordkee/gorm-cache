@@ -1,8 +1,8 @@
 package cache
 
 import (
-	"encoding/json"
 	"errors"
+	"github.com/swordkee/gorm-cache/internal/json"
 	"reflect"
 	"strconv"
 	"strings"
