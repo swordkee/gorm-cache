@@ -118,21 +118,17 @@ func TestMain(m *testing.M) {
 		log("setup primary cache error: %v", err)
 		os.Exit(-1)
 	}
-	allCache, err = cache.NewGorm2Cache(config.NewMemoryConfig())
-	if err != nil {
-		log("setup all cache error: %v", err)
-		os.Exit(-1)
-	}
-	allCache, err = cache.NewGorm2Cache(config.NewRedisConfig(redisClient))
-	/*		CacheLevel:           config.CacheLevelAll,
-			CacheStorage:         config.CacheStorageMemory,
-			RedisConfig:          cache.NewRedisConfigWithClient(redisClient),
-			InvalidateWhenUpdate: true,
-			CacheTTL:             5000,
-			CacheMaxItemCnt:      5000,
-			CacheSize:            1000,
-			DebugMode:            false,
-		})*/
+
+	allCache, err = cache.NewGorm2Cache(&config.CacheConfig{
+		CacheLevel:           config.CacheLevelAll,
+		CacheStorage:         config.CacheStorageMemory,
+		RedisConfig:          cache.NewRedisConfigWithClient(redisClient),
+		InvalidateWhenUpdate: true,
+		CacheTTL:             5000,
+		CacheMaxItemCnt:      5000,
+		CacheSize:            1000,
+		DebugMode:            false,
+	})
 	if err != nil {
 		log("setup all cache error: %v", err)
 		os.Exit(-1)
