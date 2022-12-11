@@ -58,7 +58,7 @@ func (c *Gorm2Cache) Initialize(db *gorm.DB) (err error) {
 }
 
 func (c *Gorm2Cache) AttachToDB(db *gorm.DB) {
-	c.Initialize(db)
+	_ = c.Initialize(db)
 }
 
 func (c *Gorm2Cache) Init() error {

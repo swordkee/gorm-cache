@@ -15,40 +15,37 @@
 
 ```go
 package main
+
 import (
-    "context"
-    "github.com/swordkee/gorm-cache/cache"
-    "github.com/go-redis/redis"
+	"context"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/swordkee/gorm-cache/cache"
+	"github.com/swordkee/gorm-cache/config"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 func main() {
-    dsn := "user:pass@tcp(127.0.0.1:3306)/database_name?charset=utf8mb4"
-    db, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-    
-    redisClient := redis.NewClient(&redis.Options{
-        Addr: "localhost:6379",    
-    })
-    
-    cache, _ := cache.NewGorm2Cache(&config.CacheConfig{
-        CacheLevel:           config.CacheLevelAll,
-        CacheStorage:         config.CacheStorageRedis,
-        RedisConfig:          cache.NewRedisConfigWithClient(redisClient),
-        InvalidateWhenUpdate: true, // when you create/update/delete objects, invalidate cache
-        CacheTTL:             5000, // 5000 ms
-        CacheMaxItemCnt:      5,    // if length of objects retrieved one single time 
-                                    // exceeds this number, then don't cache
-    })
-    // More options in `config.config.go`
-    db.Use(cache)    // use gorm plugin
-    // cache.AttachToDB(db)
+	dsn := "user:pass@tcp(127.0.0.1:3306)/database_name?charset=utf8mb4"
+	db, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
-    var users []User
-    
-    db.Where("value > ?", 123).Find(&users) // search cache not hit, objects cached
-    db.Where("value > ?", 123).Find(&users) // search cache hit
-    
-    db.Where("id IN (?)", []int{1, 2, 3}).Find(&users) // primary key cache not hit, users cached
-    db.Where("id IN (?)", []int{1, 3}).Find(&users) // primary key cache hit
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+
+	cache, _ := cache.NewGorm2Cache(&config.NewRedisConfig(redisClient))
+	// More options in `config.config.go`
+	db.Use(cache) // use gorm plugin
+	// cache.AttachToDB(db)
+
+	var users []User
+	ctx := context.Background()
+	db.WithContext(ctx).Where("value > ?", 123).Find(&users) // search cache not hit, objects cached
+	db.WithContext(ctx).Where("value > ?", 123).Find(&users) // search cache hit
+
+	db.WithContext(ctx).Where("id IN (?)", []int{1, 2, 3}).Find(&users) // primary key cache not hit, users cached
+	db.WithContext(ctx).Where("id IN (?)", []int{1, 3}).Find(&users)    // primary key cache hit
 }
 ```
 

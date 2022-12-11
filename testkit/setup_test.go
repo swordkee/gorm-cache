@@ -134,9 +134,9 @@ func TestMain(m *testing.M) {
 		os.Exit(-1)
 	}
 
-	primaryDB.Use(primaryCache)
-	searchDB.Use(searchCache)
-	allDB.Use(allCache)
+	_ = primaryDB.Use(primaryCache)
+	_ = searchDB.Use(searchCache)
+	_ = allDB.Use(allCache)
 	// primaryCache.AttachToDB(primaryDB)
 	// searchCache.AttachToDB(searchDB)
 	// allCache.AttachToDB(allDB)

@@ -12,6 +12,8 @@ func TestPrimaryCacheFunctionality(t *testing.T) {
 
 		testFind(primaryCache, primaryDB)
 
+		testPtrFind(primaryCache, primaryDB)
+
 		testPrimaryFind(primaryCache, primaryDB)
 
 		testPrimaryUpdate(primaryCache, primaryDB)
