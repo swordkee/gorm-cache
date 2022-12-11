@@ -2,11 +2,11 @@ package data_layer
 
 import (
 	"context"
+	"github.com/go-redis/redis/v8"
 	"time"
 
-	"github.com/Pacific73/gorm-cache/config"
-	"github.com/Pacific73/gorm-cache/util"
-	"github.com/go-redis/redis"
+	"github.com/swordkee/gorm-cache/config"
+	"github.com/swordkee/gorm-cache/util"
 )
 
 type RedisLayer struct {
@@ -34,6 +34,7 @@ func (r *RedisLayer) Init(conf *config.CacheConfig, prefix string) error {
 }
 
 func (r *RedisLayer) initScripts() error {
+	ctx := context.Background()
 	batchKeyExistScript := `
 		for idx, val in pairs(KEYS) do
 			local exists = redis.call('EXISTS', val)
@@ -50,26 +51,26 @@ func (r *RedisLayer) initScripts() error {
 		end
 		return 1`
 
-	result := r.client.ScriptLoad(batchKeyExistScript)
+	result := r.client.ScriptLoad(ctx, batchKeyExistScript)
 	if result.Err() != nil {
-		r.logger.CtxError(context.Background(), "[initScripts] init script 1 error: %v", result.Err())
+		r.logger.CtxError(ctx, "[initScripts] init script 1 error: %v", result.Err())
 		return result.Err()
 	}
 	r.batchExistSha = result.Val()
-	r.logger.CtxInfo(context.Background(), "[initScripts] init batch exist script sha1: %s", r.batchExistSha)
+	r.logger.CtxInfo(ctx, "[initScripts] init batch exist script sha1: %s", r.batchExistSha)
 
-	result = r.client.ScriptLoad(cleanCacheScript)
+	result = r.client.ScriptLoad(ctx, cleanCacheScript)
 	if result.Err() != nil {
-		r.logger.CtxError(context.Background(), "[initScripts] init script 2 error: %v", result.Err())
+		r.logger.CtxError(ctx, "[initScripts] init script 2 error: %v", result.Err())
 		return result.Err()
 	}
 	r.cleanCacheSha = result.Val()
-	r.logger.CtxInfo(context.Background(), "[initScripts] init clean cache script sha1: %s", r.cleanCacheSha)
+	r.logger.CtxInfo(ctx, "[initScripts] init clean cache script sha1: %s", r.cleanCacheSha)
 	return nil
 }
 
 func (r *RedisLayer) CleanCache(ctx context.Context) error {
-	result := r.client.EvalSha(r.cleanCacheSha, []string{"0"}, r.keyPrefix+":*")
+	result := r.client.EvalSha(ctx, r.cleanCacheSha, []string{"0"}, r.keyPrefix+":*")
 	if result.Err() != nil {
 		r.logger.CtxError(ctx, "[CleanCache] clean cache error: %v", result.Err())
 		return result.Err()
@@ -78,7 +79,7 @@ func (r *RedisLayer) CleanCache(ctx context.Context) error {
 }
 
 func (r *RedisLayer) BatchKeyExist(ctx context.Context, keys []string) (bool, error) {
-	result := r.client.EvalSha(r.batchExistSha, keys)
+	result := r.client.EvalSha(ctx, r.batchExistSha, keys)
 	if result.Err() != nil {
 		r.logger.CtxError(ctx, "[BatchKeyExist] eval script error: %v", result.Err())
 		return false, result.Err()
@@ -87,7 +88,7 @@ func (r *RedisLayer) BatchKeyExist(ctx context.Context, keys []string) (bool, er
 }
 
 func (r *RedisLayer) KeyExists(ctx context.Context, key string) (bool, error) {
-	result := r.client.Exists(key)
+	result := r.client.Exists(ctx, key)
 	if result.Err() != nil {
 		r.logger.CtxError(ctx, "[KeyExists] exists error: %v", result.Err())
 		return false, result.Err()
@@ -99,11 +100,11 @@ func (r *RedisLayer) KeyExists(ctx context.Context, key string) (bool, error) {
 }
 
 func (r *RedisLayer) GetValue(ctx context.Context, key string) (string, error) {
-	return r.client.Get(key).Result()
+	return r.client.Get(ctx, key).Result()
 }
 
 func (r *RedisLayer) BatchGetValues(ctx context.Context, keys []string) ([]string, error) {
-	result := r.client.MGet(keys...)
+	result := r.client.MGet(ctx, keys...)
 	if result.Err() != nil {
 		r.logger.CtxError(ctx, "[BatchGetValues] mget error: %v", result.Err())
 		return nil, result.Err()
@@ -119,16 +120,16 @@ func (r *RedisLayer) BatchGetValues(ctx context.Context, keys []string) ([]strin
 }
 
 func (r *RedisLayer) DeleteKeysWithPrefix(ctx context.Context, keyPrefix string) error {
-	result := r.client.EvalSha(r.cleanCacheSha, []string{"0"}, keyPrefix+":*")
+	result := r.client.EvalSha(ctx, r.cleanCacheSha, []string{"0"}, keyPrefix+":*")
 	return result.Err()
 }
 
 func (r *RedisLayer) DeleteKey(ctx context.Context, key string) error {
-	return r.client.Del(key).Err()
+	return r.client.Del(ctx, key).Err()
 }
 
 func (r *RedisLayer) BatchDeleteKeys(ctx context.Context, keys []string) error {
-	return r.client.Del(keys...).Err()
+	return r.client.Del(ctx, keys...).Err()
 }
 
 func (r *RedisLayer) BatchSetKeys(ctx context.Context, kvs []util.Kv) error {
@@ -138,11 +139,11 @@ func (r *RedisLayer) BatchSetKeys(ctx context.Context, kvs []util.Kv) error {
 			spreads = append(spreads, kv.Key)
 			spreads = append(spreads, kv.Value)
 		}
-		return r.client.MSet(spreads...).Err()
+		return r.client.MSet(ctx, spreads...).Err()
 	}
-	_, err := r.client.Pipelined(func(pipeliner redis.Pipeliner) error {
+	_, err := r.client.Pipelined(ctx, func(pipeliner redis.Pipeliner) error {
 		for _, kv := range kvs {
-			result := pipeliner.Set(kv.Key, kv.Value, time.Duration(util.RandFloatingInt64(r.ttl))*time.Millisecond)
+			result := pipeliner.Set(ctx, kv.Key, kv.Value, time.Duration(util.RandFloatingInt64(r.ttl))*time.Millisecond)
 			if result.Err() != nil {
 				r.logger.CtxError(ctx, "[BatchSetKeys] set key %s error: %v", kv.Key, result.Err())
 				return result.Err()
@@ -154,5 +155,5 @@ func (r *RedisLayer) BatchSetKeys(ctx context.Context, kvs []util.Kv) error {
 }
 
 func (r *RedisLayer) SetKey(ctx context.Context, kv util.Kv) error {
-	return r.client.Set(kv.Key, kv.Value, time.Duration(util.RandFloatingInt64(r.ttl))*time.Millisecond).Err()
+	return r.client.Set(ctx, kv.Key, kv.Value, time.Duration(util.RandFloatingInt64(r.ttl))*time.Millisecond).Err()
 }

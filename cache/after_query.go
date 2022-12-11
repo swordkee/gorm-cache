@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/Pacific73/gorm-cache/config"
-	"github.com/Pacific73/gorm-cache/util"
+	"github.com/swordkee/gorm-cache/config"
+	"github.com/swordkee/gorm-cache/util"
 	"gorm.io/gorm"
 )
 
