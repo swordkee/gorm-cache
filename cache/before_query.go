@@ -1,12 +1,11 @@
 package cache
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
 	"strconv"
 	"strings"
-
-	"github.com/swordkee/gorm-cache/internal/json"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/swordkee/gorm-cache/config"

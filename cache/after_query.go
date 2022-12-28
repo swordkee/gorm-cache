@@ -1,12 +1,12 @@
 package cache
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/swordkee/gorm-cache/config"
-	"github.com/swordkee/gorm-cache/internal/json"
 	"github.com/swordkee/gorm-cache/util"
 	"gorm.io/gorm"
 )
