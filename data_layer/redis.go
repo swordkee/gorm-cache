@@ -2,7 +2,7 @@ package data_layer
 
 import (
 	"context"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"time"
 
 	"github.com/swordkee/gorm-cache/config"
@@ -10,7 +10,7 @@ import (
 )
 
 type RedisLayer struct {
-	client    *redis.Client
+	client    redis.UniversalClient
 	ttl       int64
 	logger    config.LoggerInterface
 	keyPrefix string
@@ -21,7 +21,7 @@ type RedisLayer struct {
 
 func (r *RedisLayer) Init(conf *config.CacheConfig, prefix string) error {
 	if conf.RedisConfig.Mode == config.RedisConfigModeOptions {
-		r.client = redis.NewClient(conf.RedisConfig.Options)
+		r.client = redis.NewUniversalClient(conf.RedisConfig.Options)
 	} else {
 		r.client = conf.RedisConfig.Client
 	}

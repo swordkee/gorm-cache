@@ -9,7 +9,7 @@ import (
 
 	"github.com/swordkee/gorm-cache/cache"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"github.com/swordkee/gorm-cache/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -87,7 +87,7 @@ func TestMain(m *testing.M) {
 		os.Exit(-1)
 	}
 
-	redisClient := redis.NewClient(&redis.Options{Addr: redisIp + ":" + redisPort})
+	redisClient := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: []string{redisIp + ":" + redisPort}})
 
 	searchCache, err = cache.NewGorm2Cache(&config.CacheConfig{
 		CacheLevel:           config.CacheLevelOnlySearch,

@@ -19,7 +19,7 @@ package main
 import (
 	"context"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"github.com/swordkee/gorm-cache/cache"
 	"github.com/swordkee/gorm-cache/config"
 	"gorm.io/driver/mysql"
@@ -30,8 +30,8 @@ func main() {
 	dsn := "user:pass@tcp(127.0.0.1:3306)/database_name?charset=utf8mb4"
 	db, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+	redisClient := redis.NewUniversalClient(&redis.UniversalOptions{
+		Addrs: []string{"localhost:6379"},
 	})
 
 	// More options in `config.config.go`
