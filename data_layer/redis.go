@@ -2,15 +2,15 @@ package data_layer
 
 import (
 	"context"
+	"github.com/redis/go-redis/v9"
 	"time"
 
-	"github.com/Pacific73/gorm-cache/config"
-	"github.com/Pacific73/gorm-cache/util"
-	"github.com/go-redis/redis/v8"
+	"github.com/swordkee/gorm-cache/config"
+	"github.com/swordkee/gorm-cache/util"
 )
 
 type RedisLayer struct {
-	client    *redis.Client
+	client    redis.UniversalClient
 	ttl       int64
 	logger    config.LoggerInterface
 	keyPrefix string
@@ -21,7 +21,7 @@ type RedisLayer struct {
 
 func (r *RedisLayer) Init(conf *config.CacheConfig, prefix string) error {
 	if conf.RedisConfig.Mode == config.RedisConfigModeOptions {
-		r.client = redis.NewClient(conf.RedisConfig.Options)
+		r.client = redis.NewUniversalClient(conf.RedisConfig.Options)
 	} else {
 		r.client = conf.RedisConfig.Client
 	}
@@ -34,6 +34,7 @@ func (r *RedisLayer) Init(conf *config.CacheConfig, prefix string) error {
 }
 
 func (r *RedisLayer) initScripts() error {
+	ctx := context.Background()
 	batchKeyExistScript := `
 		for idx, val in pairs(KEYS) do
 			local exists = redis.call('EXISTS', val)
@@ -50,21 +51,21 @@ func (r *RedisLayer) initScripts() error {
 		end
 		return 1`
 
-	result := r.client.ScriptLoad(context.Background(), batchKeyExistScript)
+	result := r.client.ScriptLoad(ctx, batchKeyExistScript)
 	if result.Err() != nil {
-		r.logger.CtxError(context.Background(), "[initScripts] init script 1 error: %v", result.Err())
+		r.logger.CtxError(ctx, "[initScripts] init script 1 error: %v", result.Err())
 		return result.Err()
 	}
 	r.batchExistSha = result.Val()
-	r.logger.CtxInfo(context.Background(), "[initScripts] init batch exist script sha1: %s", r.batchExistSha)
+	r.logger.CtxInfo(ctx, "[initScripts] init batch exist script sha1: %s", r.batchExistSha)
 
-	result = r.client.ScriptLoad(context.Background(), cleanCacheScript)
+	result = r.client.ScriptLoad(ctx, cleanCacheScript)
 	if result.Err() != nil {
-		r.logger.CtxError(context.Background(), "[initScripts] init script 2 error: %v", result.Err())
+		r.logger.CtxError(ctx, "[initScripts] init script 2 error: %v", result.Err())
 		return result.Err()
 	}
 	r.cleanCacheSha = result.Val()
-	r.logger.CtxInfo(context.Background(), "[initScripts] init clean cache script sha1: %s", r.cleanCacheSha)
+	r.logger.CtxInfo(ctx, "[initScripts] init clean cache script sha1: %s", r.cleanCacheSha)
 	return nil
 }
 
@@ -133,7 +134,7 @@ func (r *RedisLayer) BatchDeleteKeys(ctx context.Context, keys []string) error {
 
 func (r *RedisLayer) BatchSetKeys(ctx context.Context, kvs []util.Kv) error {
 	if r.ttl == 0 {
-		spreads := make([]interface{}, 0, len(kvs))
+		spreads := make([]any, 0, len(kvs))
 		for _, kv := range kvs {
 			spreads = append(spreads, kv.Key)
 			spreads = append(spreads, kv.Value)
