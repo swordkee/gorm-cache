@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/go-redis/redis/v8"
 	"sync"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type RedisConfigMode int

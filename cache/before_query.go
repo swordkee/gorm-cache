@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Pacific73/gorm-cache/config"
+	"github.com/Pacific73/gorm-cache/util"
 	"github.com/go-redis/redis/v8"
-	"github.com/swordkee/gorm-cache/config"
-	"github.com/swordkee/gorm-cache/util"
 	"gorm.io/gorm"
 	"gorm.io/gorm/callbacks"
 )
@@ -31,7 +31,7 @@ func BeforeQuery(cache *Gorm2Cache) func(db *gorm.DB) {
 
 		if util.ShouldCache(tableName, cache.Config.Tables) {
 
-			if util.In(cache.Config.CacheLevel, []config.CacheLevel{config.CacheLevelAll, config.CacheLevelOnlySearch}) {
+			if cache.Config.CacheLevel == config.CacheLevelAll || cache.Config.CacheLevel == config.CacheLevelOnlySearch {
 				// search cache hit
 
 				cacheValue, err := cache.GetSearchCache(ctx, tableName, sql, db.Statement.Vars...)
@@ -61,7 +61,7 @@ func BeforeQuery(cache *Gorm2Cache) func(db *gorm.DB) {
 				return
 			}
 
-			if util.In(cache.Config.CacheLevel, []config.CacheLevel{config.CacheLevelAll, config.CacheLevelOnlyPrimary}) {
+			if cache.Config.CacheLevel == config.CacheLevelAll || cache.Config.CacheLevel == config.CacheLevelOnlyPrimary {
 				primaryKeys := getPrimaryKeysFromWhereClause(db)
 				cache.Logger.CtxInfo(ctx, "[BeforeQuery] parse primary keys = %v", primaryKeys)
 

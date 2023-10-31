@@ -7,10 +7,10 @@ import (
 
 	"gorm.io/gorm/logger"
 
-	"github.com/swordkee/gorm-cache/cache"
+	"github.com/Pacific73/gorm-cache/cache"
 
+	"github.com/Pacific73/gorm-cache/config"
 	"github.com/go-redis/redis/v8"
-	"github.com/swordkee/gorm-cache/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -134,9 +134,9 @@ func TestMain(m *testing.M) {
 		os.Exit(-1)
 	}
 
-	_ = primaryDB.Use(primaryCache)
-	_ = searchDB.Use(searchCache)
-	_ = allDB.Use(allCache)
+	primaryDB.Use(primaryCache)
+	searchDB.Use(searchCache)
+	allDB.Use(allCache)
 	// primaryCache.AttachToDB(primaryDB)
 	// searchCache.AttachToDB(searchDB)
 	// allCache.AttachToDB(allDB)
